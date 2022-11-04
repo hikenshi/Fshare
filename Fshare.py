@@ -79,16 +79,16 @@ def main():
     with open('account.json', 'r') as acc:
         data = json.load(acc)
     password = data['password']
-    email = data['email']
+    email = data['user_email']
     useragent = data['useragent']
-    appkey= data['appkey']
-
+    appkey= data['app_key']
+    #print(namefile)
     token, session_id = login(password, email, useragent, appkey)
     dir_path = os.path.dirname(os.path.realpath(__file__))
     if token is False:
         exit()
     if len(url_folder) < 2:
-        if name_file != "fshare_links.txt":
+        if namefile != "fshare_links.txt":
             with open(namefile, "r") as fp:
                 url_download = fp.readlines()
         else:
@@ -100,8 +100,14 @@ def main():
             with open(namefile, "r") as fp:
                 url_download = fp.readlines()
     for i in url_download:
-        link_ = "https://"+i.split(' ')[0]
-        name_file = i.split(' ')[1].strip()
+        if "https" in i:
+            link_ = i.split(' ')[0]
+        else:
+            link_ = "https://"+i.split(' ')[0]
+        try:
+            name_file = i.split(' ')[1].strip()
+        except IndexError:
+            name_file = link_.split('/')[4]
         if os.path.exists(dir_path+'/'+name_file) is True:
             print("file "+ name_file+" exist!")
             continue
