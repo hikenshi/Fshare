@@ -7,6 +7,7 @@ from sys import exit
 import inspect
 import re
 import os
+from urllib.parse import unquote
 
 def run_and_printchar(args):
     #credit to https://gist.github.com/autosquid/6acb386b5d5132516c1d6d87081310be about process bar of wget
@@ -30,7 +31,11 @@ def run_and_printchar(args):
             break
     if not 0 == pipe.returncode:
         return False
-    return True
+   
+def encodeFile(encode_type, name_file):
+    name_file = unquote(name_file)
+    output_name_file = name_file[:-4]+".h265.mkv"
+    run_and_printchar(['ffmpeg','-i', name_file, '-c:v', encode_type, '-b:v' , '9M', '-preset', 'ultrafast', '-c:a', 'copy', '-y' , output_name_file])
 
 def layLinkFolder(url_folder, namefile, token, session_id, useragent):
     CurlUrlFolder = 'curl -X POST "https://api.fshare.vn/api/fileops/getFolderList" -H  "accept: application/json" -H  "User-Agent: %s" -H  "Cookie: session_id=%s" -H  "Content-Type: application/json" -d "{\\"url\\":\\"%s\\",\\"dirOnly\\":0,\\"pageIndex\\":0,\\"limit\\":60,\\"token\\":\\"%s\\"}"' %(useragent, session_id, url_folder, token)
@@ -76,6 +81,14 @@ def main():
     else:
         print("command not valid!")
         return
+    method2 = input("Do you want encode? (choose [1]: x265, [2]: x264, default [0]: no encode)\n")
+
+    if method2 == "1":
+        encode = 1
+    elif method2 == "2":
+        encode = 2
+    else:
+        encode = 0
     with open('account.json', 'r') as acc:
         data = json.load(acc)
     password = data['password']
@@ -115,7 +128,13 @@ def main():
         status2, output2 = subprocess.getstatusoutput(CurlUrl2)
         print(output2, link_)
         download_link = json.loads(output2.split('\n')[-1])["location"]
+        name_file = download_link.split("/")[5]
         run_and_printchar(['wget','-nv',download_link])
-        
+        if encode == 1:
+            encode_type = "libx265"
+            encodeFile(encode_type, name_file)
+        if encode == 2:
+            encode_type = "libx264"
+            encodeFile(encode_type, name_file)
 if __name__ == '__main__':
     main()
